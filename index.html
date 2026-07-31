@@ -237,6 +237,132 @@
     table{font-size:12px;}
     th, td{padding:7px 8px;}
   }
+
+  .visit-card{cursor:pointer; transition:box-shadow .12s;}
+  .visit-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08);}
+
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(28,43,36,.45);
+    z-index:50;
+    align-items:flex-start;
+    justify-content:center;
+    padding:24px 12px;
+    overflow-y:auto;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:#fff;
+    border-radius:var(--radius);
+    width:100%;
+    max-width:560px;
+    max-height:calc(100vh - 48px);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .modal-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .modal-head h2{margin:0; font-size:17px;}
+  .modal-close{
+    width:auto;
+    background:transparent;
+    color:var(--muted);
+    font-size:22px;
+    line-height:1;
+    padding:0 4px;
+  }
+  .modal-close:hover{background:transparent; color:var(--ink);}
+  .modal-body{
+    padding:16px 18px;
+    overflow-y:auto;
+  }
+  .modal-body h3{
+    font-size:12.5px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    color:var(--muted);
+    margin:18px 0 8px;
+  }
+  .modal-body h3:first-of-type{margin-top:4px;}
+  .vm-meta{
+    font-size:13.5px;
+    color:var(--muted);
+    padding-bottom:10px;
+    border-bottom:1px solid var(--line);
+  }
+  .mhd-row{
+    display:grid;
+    grid-template-columns:1fr 90px 110px;
+    gap:8px;
+    align-items:center;
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .mhd-row:last-child{border-bottom:none;}
+  .mhd-row .mhd-name{font-weight:600;}
+  .mhd-row .mhd-sub{font-size:12px; color:var(--muted); font-weight:400;}
+  .mhd-row input[type=number]{
+    width:100%;
+    padding:6px 8px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    font-size:13.5px;
+    margin:0;
+  }
+  .mhd-row select{
+    width:100%;
+    padding:6px 6px;
+    font-size:13px;
+  }
+  .doc-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:7px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .doc-row:last-child{border-bottom:none;}
+  .doc-row select{width:120px;}
+  textarea{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    font-size:14px;
+    font-family:inherit;
+    resize:vertical;
+  }
+  .modal-foot{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:14px 18px;
+    border-top:1px solid var(--line);
+  }
+  .modal-foot button{width:auto; padding:9px 16px; font-size:14px;}
+  .modal-foot button.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--line);
+  }
+  .modal-foot button.secondary:hover{background:var(--paper);}
+  .vm-hint{font-size:12.5px; color:var(--muted); flex:1;}
+  .vm-hint.ok{color:var(--ok);}
+  .vm-hint.err{color:var(--danger);}
+  #vm-photo-input{
+    font-size:13px;
+    padding:6px 0;
+  }
 </style>
 </head>
 <body>
@@ -304,6 +430,38 @@
   </main>
 </div>
 
+<!-- BEZOEK AFRONDEN MODAL -->
+<div id="visit-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="vm-title">Bezoek</h2>
+      <button class="modal-close" id="vm-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="vm-meta" class="vm-meta"></div>
+
+      <h3>Bestand &amp; MHD per product</h3>
+      <div id="vm-mhd-list"></div>
+
+      <h3>Belegen</h3>
+      <div id="vm-docs"></div>
+
+      <h3>Foto</h3>
+      <input type="file" id="vm-photo-input" accept="image/*" capture="environment">
+      <div id="vm-photo-status" class="vm-hint"></div>
+
+      <h3>Opmerking</h3>
+      <textarea id="vm-notitie" rows="2" placeholder="Eventuele opmerking over dit bezoek…"></textarea>
+    </div>
+    <div class="modal-foot">
+      <div id="vm-save-status" class="vm-hint"></div>
+      <button class="secondary" id="vm-save-btn">Opslaan</button>
+      <button id="vm-complete-btn">Bezoek afronden</button>
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script>
+
 </body>
 </html>
