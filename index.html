@@ -534,7 +534,47 @@
   </div>
 </div>
 
+<!-- TELEFOONTAAK MODAL -->
+<div id="call-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="clm-title">Telefoontaak</h2>
+      <button class="modal-close" id="clm-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="clm-meta" class="vm-meta"></div>
+
+      <h3>Status</h3>
+      <select id="clm-status">
+        <option value="geplant">Geplant</option>
+        <option value="gebeld">Gebeld</option>
+        <option value="geen gehoor">Geen gehoor</option>
+        <option value="belt terug">Belt terug</option>
+        <option value="voltooid">Voltooid</option>
+      </select>
+
+      <h3>Resultaat</h3>
+      <textarea id="clm-ergebnis" rows="2" placeholder="Kort resultaat van het gesprek…"></textarea>
+
+      <h3>Terugbellen nodig?</h3>
+      <select id="clm-rueckruf">
+        <option value="nein">Nee</option>
+        <option value="ja">Ja</option>
+      </select>
+
+      <h3>Notitie</h3>
+      <textarea id="clm-notiz" rows="2" placeholder="Overige opmerkingen…"></textarea>
+    </div>
+    <div class="modal-foot">
+      <div id="clm-save-status" class="vm-hint"></div>
+      <button class="secondary" id="clm-close-btn">Sluiten</button>
+      <button id="clm-save-btn">Opslaan</button>
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script>
+
 
 
 </body>
