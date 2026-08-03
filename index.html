@@ -363,6 +363,39 @@
     font-size:13px;
     padding:6px 0;
   }
+
+  tr.customer-row{cursor:pointer;}
+  tr.customer-row:hover{background:var(--paper);}
+
+  .history-item{
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .history-item:last-child{border-bottom:none;}
+  .history-item .h-date{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+  }
+  .history-item .h-line{margin-top:3px;}
+  .history-item .h-label{color:var(--muted);}
+  .add-form{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px;
+    margin-top:8px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .add-form input, .add-form textarea, .add-form select{
+    margin-bottom:0;
+  }
+  .add-form button{align-self:flex-start;}
 </style>
 </head>
 <body>
@@ -461,7 +494,48 @@
   </div>
 </div>
 
+<!-- KLANTENKAART MODAL -->
+<div id="customer-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="cm-title">Klant</h2>
+      <button class="modal-close" id="cm-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="cm-meta" class="vm-meta"></div>
+
+      <h3>Contactgeschiedenis</h3>
+      <div id="cm-contacts-list"></div>
+      <div class="add-form">
+        <select id="cm-contact-soort">
+          <option value="telefoon">Telefoon</option>
+          <option value="bezoek">Bezoek</option>
+          <option value="e-mail">E-mail</option>
+          <option value="overig">Overig</option>
+        </select>
+        <textarea id="cm-contact-besproken" rows="2" placeholder="Wat is besproken?"></textarea>
+        <textarea id="cm-contact-te-bespreken" rows="2" placeholder="Wat moet nog besproken worden (volgende keer)?"></textarea>
+        <button class="secondary" id="cm-contact-add-btn">Contactmoment toevoegen</button>
+      </div>
+
+      <h3>Bestelgeschiedenis</h3>
+      <div id="cm-orders-list"></div>
+      <div class="add-form">
+        <input type="text" id="cm-order-artikel" placeholder="Artikel">
+        <input type="text" id="cm-order-hoeveelheid" placeholder="Hoeveelheid (bv. 8 dozen)">
+        <textarea id="cm-order-opmerking" rows="1" placeholder="Opmerking (optioneel)"></textarea>
+        <button class="secondary" id="cm-order-add-btn">Bestelling toevoegen</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div id="cm-save-status" class="vm-hint"></div>
+      <button class="secondary" id="cm-close-btn">Sluiten</button>
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script>
+
 
 </body>
 </html>
