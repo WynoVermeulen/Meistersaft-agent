@@ -1,4 +1,3 @@
- 
 // ============================================================
 // Flevosap Duitsland Agent - app.js
 // ============================================================
@@ -163,7 +162,7 @@ function renderCustomers() {
         ${rows
           .map(
             (c) => `
-          <tr>
+          <tr class="customer-row" data-customer-id="${escapeHtml(c.id)}">
             <td>${escapeHtml(c.kunde)}</td>
             <td>${escapeHtml(c.kanal || "—")}</td>
             <td>${escapeHtml(c.abc || "—")}</td>
@@ -177,6 +176,10 @@ function renderCustomers() {
       </tbody>
     </table>`;
   document.getElementById("cust-table-wrap").innerHTML = html;
+
+  document.querySelectorAll("#cust-table-wrap tr.customer-row").forEach((row) => {
+    row.addEventListener("click", () => openCustomerModal(row.dataset.customerId));
+  });
 }
 
 function statusLabel(s) {
@@ -474,6 +477,174 @@ document.getElementById("visit-cards").addEventListener("click", (e) => {
   if (card && card.dataset.besuchsId) {
     openVisitModal(card.dataset.besuchsId);
   }
+});
+
+// ---------- KLANTENKAART MODAL ----------
+let cmCustomerId = null;
+
+const customerModal = document.getElementById("customer-modal");
+const cmTitle = document.getElementById("cm-title");
+const cmMeta = document.getElementById("cm-meta");
+const cmContactsList = document.getElementById("cm-contacts-list");
+const cmOrdersList = document.getElementById("cm-orders-list");
+const cmSaveStatus = document.getElementById("cm-save-status");
+
+document.getElementById("cm-close").addEventListener("click", closeCustomerModal);
+document.getElementById("cm-close-btn").addEventListener("click", closeCustomerModal);
+customerModal.addEventListener("click", (e) => {
+  if (e.target === customerModal) closeCustomerModal();
+});
+
+function closeCustomerModal() {
+  customerModal.classList.remove("open");
+  cmCustomerId = null;
+}
+
+async function openCustomerModal(customerId) {
+  cmCustomerId = customerId;
+  cmSaveStatus.textContent = "";
+  cmContactsList.innerHTML = `<div class="empty">Bezig met laden…</div>`;
+  cmOrdersList.innerHTML = `<div class="empty">Bezig met laden…</div>`;
+  document.getElementById("cm-contact-besproken").value = "";
+  document.getElementById("cm-contact-te-bespreken").value = "";
+  document.getElementById("cm-order-artikel").value = "";
+  document.getElementById("cm-order-hoeveelheid").value = "";
+  document.getElementById("cm-order-opmerking").value = "";
+  customerModal.classList.add("open");
+
+  const customer = allCustomers.find((c) => c.id === customerId);
+  cmTitle.textContent = customer ? customer.kunde : "Klant";
+  cmMeta.innerHTML = customer
+    ? `${escapeHtml(customer.adres || "")}, ${escapeHtml(customer.postcode || "")} ${escapeHtml(customer.plaats || "")}<br>
+       ${escapeHtml(customer.telefoon || "—")} · ${escapeHtml(customer.email || "—")} · Kanaal: ${escapeHtml(customer.kanal || "—")} · ABC: ${escapeHtml(customer.abc || "—")}`
+    : "";
+
+  await Promise.all([loadCustomerContacts(customerId), loadCustomerOrders(customerId)]);
+}
+
+async function loadCustomerContacts(customerId) {
+  const { data, error } = await sb
+    .from("customer_contacts")
+    .select("*")
+    .eq("customer_id", customerId)
+    .order("datum", { ascending: false });
+
+  if (error) {
+    cmContactsList.innerHTML = `<div class="empty">Kon contactgeschiedenis niet laden: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  if (!data || data.length === 0) {
+    cmContactsList.innerHTML = `<div class="empty">Nog geen contactmomenten vastgelegd.</div>`;
+    return;
+  }
+  cmContactsList.innerHTML = data
+    .map(
+      (r) => `
+    <div class="history-item">
+      <div class="h-date">${escapeHtml(r.datum)} · ${escapeHtml(r.soort)}${r.door ? " · " + escapeHtml(r.door) : ""}</div>
+      ${r.besproken ? `<div class="h-line"><span class="h-label">Besproken:</span> ${escapeHtml(r.besproken)}</div>` : ""}
+      ${r.te_bespreken ? `<div class="h-line"><span class="h-label">Nog te bespreken:</span> ${escapeHtml(r.te_bespreken)}</div>` : ""}
+    </div>`
+    )
+    .join("");
+}
+
+async function loadCustomerOrders(customerId) {
+  const { data, error } = await sb
+    .from("orders")
+    .select("*")
+    .eq("customer_id", customerId)
+    .order("datum", { ascending: false });
+
+  if (error) {
+    cmOrdersList.innerHTML = `<div class="empty">Kon bestelgeschiedenis niet laden: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  if (!data || data.length === 0) {
+    cmOrdersList.innerHTML = `<div class="empty">Nog geen bestellingen vastgelegd.</div>`;
+    return;
+  }
+  cmOrdersList.innerHTML = data
+    .map(
+      (r) => `
+    <div class="history-item">
+      <div class="h-date">${escapeHtml(r.datum)}${r.door ? " · " + escapeHtml(r.door) : ""}</div>
+      <div class="h-line"><span class="h-label">Artikel:</span> ${escapeHtml(r.artikel || "—")} · <span class="h-label">Hoeveelheid:</span> ${escapeHtml(r.hoeveelheid || "—")}</div>
+      ${r.opmerking ? `<div class="h-line">${escapeHtml(r.opmerking)}</div>` : ""}
+    </div>`
+    )
+    .join("");
+}
+
+document.getElementById("cm-contact-add-btn").addEventListener("click", async () => {
+  const soort = document.getElementById("cm-contact-soort").value;
+  const besproken = document.getElementById("cm-contact-besproken").value.trim();
+  const teBespreken = document.getElementById("cm-contact-te-bespreken").value.trim();
+
+  if (!besproken && !teBespreken) {
+    cmSaveStatus.textContent = "Vul minstens één van de twee velden in.";
+    cmSaveStatus.className = "vm-hint err";
+    return;
+  }
+
+  cmSaveStatus.textContent = "Bezig met opslaan…";
+  cmSaveStatus.className = "vm-hint";
+
+  const { error } = await sb.from("customer_contacts").insert({
+    customer_id: cmCustomerId,
+    soort,
+    besproken: besproken || null,
+    te_bespreken: teBespreken || null,
+    door: currentUser?.email || null,
+  });
+
+  if (error) {
+    cmSaveStatus.textContent = "Fout bij opslaan: " + error.message;
+    cmSaveStatus.className = "vm-hint err";
+    return;
+  }
+
+  document.getElementById("cm-contact-besproken").value = "";
+  document.getElementById("cm-contact-te-bespreken").value = "";
+  cmSaveStatus.textContent = "Contactmoment toegevoegd ✓";
+  cmSaveStatus.className = "vm-hint ok";
+  await loadCustomerContacts(cmCustomerId);
+});
+
+document.getElementById("cm-order-add-btn").addEventListener("click", async () => {
+  const artikel = document.getElementById("cm-order-artikel").value.trim();
+  const hoeveelheid = document.getElementById("cm-order-hoeveelheid").value.trim();
+  const opmerking = document.getElementById("cm-order-opmerking").value.trim();
+
+  if (!artikel && !hoeveelheid) {
+    cmSaveStatus.textContent = "Vul minstens artikel of hoeveelheid in.";
+    cmSaveStatus.className = "vm-hint err";
+    return;
+  }
+
+  cmSaveStatus.textContent = "Bezig met opslaan…";
+  cmSaveStatus.className = "vm-hint";
+
+  const { error } = await sb.from("orders").insert({
+    customer_id: cmCustomerId,
+    artikel: artikel || null,
+    hoeveelheid: hoeveelheid || null,
+    opmerking: opmerking || null,
+    door: currentUser?.email || null,
+  });
+
+  if (error) {
+    cmSaveStatus.textContent = "Fout bij opslaan: " + error.message;
+    cmSaveStatus.className = "vm-hint err";
+    return;
+  }
+
+  document.getElementById("cm-order-artikel").value = "";
+  document.getElementById("cm-order-hoeveelheid").value = "";
+  document.getElementById("cm-order-opmerking").value = "";
+  cmSaveStatus.textContent = "Bestelling toegevoegd ✓";
+  cmSaveStatus.className = "vm-hint ok";
+  await loadCustomerOrders(cmCustomerId);
 });
 
 // ---------- helpers ----------
