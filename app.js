@@ -271,7 +271,7 @@ function renderCalls() {
       <tbody>
         ${allCalls
           .map(
-            (c) => `<tr>
+            (c) => `<tr class="customer-row" data-telefon-id="${escapeHtml(c.telefon_id)}">
               <td>${escapeHtml(c.geplantes_telefon_datum || "")}</td>
               <td>${escapeHtml(c.zeitfenster || "")}</td>
               <td>${escapeHtml(c.kunde || "")}</td>
@@ -283,6 +283,10 @@ function renderCalls() {
           .join("")}
       </tbody>
     </table>`;
+
+  document.querySelectorAll("#call-table-wrap tr.customer-row").forEach((row) => {
+    row.addEventListener("click", () => openCallModal(row.dataset.telefonId));
+  });
 }
 
 // ---------- VISIT DETAIL MODAL (bezoek afronden) ----------
@@ -645,6 +649,81 @@ document.getElementById("cm-order-add-btn").addEventListener("click", async () =
   cmSaveStatus.textContent = "Bestelling toegevoegd ✓";
   cmSaveStatus.className = "vm-hint ok";
   await loadCustomerOrders(cmCustomerId);
+});
+
+// ---------- TELEFOONTAAK MODAL ----------
+let clmTelefonId = null;
+
+const callModal = document.getElementById("call-modal");
+const clmTitle = document.getElementById("clm-title");
+const clmMeta = document.getElementById("clm-meta");
+const clmStatus = document.getElementById("clm-status");
+const clmErgebnis = document.getElementById("clm-ergebnis");
+const clmRueckruf = document.getElementById("clm-rueckruf");
+const clmNotiz = document.getElementById("clm-notiz");
+const clmSaveStatus = document.getElementById("clm-save-status");
+
+document.getElementById("clm-close").addEventListener("click", closeCallModal);
+document.getElementById("clm-close-btn").addEventListener("click", closeCallModal);
+callModal.addEventListener("click", (e) => {
+  if (e.target === callModal) closeCallModal();
+});
+
+function closeCallModal() {
+  callModal.classList.remove("open");
+  clmTelefonId = null;
+}
+
+async function openCallModal(telefonId) {
+  clmTelefonId = telefonId;
+  clmSaveStatus.textContent = "";
+  callModal.classList.add("open");
+
+  const { data: call, error } = await sb
+    .from("phone_call_tasks")
+    .select("*")
+    .eq("telefon_id", telefonId)
+    .single();
+
+  if (error || !call) {
+    clmMeta.textContent = "Kon deze telefoontaak niet laden.";
+    return;
+  }
+
+  clmTitle.textContent = call.kunde || telefonId;
+  clmMeta.innerHTML = `${escapeHtml(call.geplantes_telefon_datum || "")} · ${escapeHtml(call.zeitfenster || "")} · ${escapeHtml(call.telefon || "—")}<br>
+    Doel: ${escapeHtml(call.gespraechsziel || "—")}`;
+
+  clmStatus.value = call.status || "geplant";
+  clmErgebnis.value = call.ergebnis_kurz || "";
+  clmRueckruf.value = call.rueckruf_erforderlich || "nein";
+  clmNotiz.value = call.notiz || "";
+}
+
+document.getElementById("clm-save-btn").addEventListener("click", async () => {
+  clmSaveStatus.textContent = "Bezig met opslaan…";
+  clmSaveStatus.className = "vm-hint";
+
+  const { error } = await sb
+    .from("phone_call_tasks")
+    .update({
+      status: clmStatus.value,
+      ergebnis_kurz: clmErgebnis.value || null,
+      rueckruf_erforderlich: clmRueckruf.value,
+      notiz: clmNotiz.value || null,
+    })
+    .eq("telefon_id", clmTelefonId);
+
+  if (error) {
+    clmSaveStatus.textContent = "Fout bij opslaan: " + error.message;
+    clmSaveStatus.className = "vm-hint err";
+    return;
+  }
+
+  clmSaveStatus.textContent = "Opgeslagen ✓";
+  clmSaveStatus.className = "vm-hint ok";
+  await loadCalls();
+  setTimeout(closeCallModal, 700);
 });
 
 // ---------- helpers ----------
