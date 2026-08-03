@@ -119,7 +119,7 @@ document.querySelectorAll("#tabs .tab").forEach((btn) => {
 async function loadCustomers() {
   const { data, error } = await sb
     .from("customers")
-    .select("id, kunde, kanal, abc, status, adres, postcode, plaats, telefoon, email")
+    .select("id, kunde, kanal, abc, status, adres, postcode, plaats, telefoon, email, ansprechpartner")
     .order("kunde", { ascending: true });
 
   if (error) {
@@ -523,8 +523,84 @@ async function openCustomerModal(customerId) {
        ${escapeHtml(customer.telefoon || "—")} · ${escapeHtml(customer.email || "—")} · Kanaal: ${escapeHtml(customer.kanal || "—")} · ABC: ${escapeHtml(customer.abc || "—")}`
     : "";
 
-  await Promise.all([loadCustomerContacts(customerId), loadCustomerOrders(customerId)]);
+  await Promise.all([
+    loadContactPersons(customerId),
+    loadCustomerContacts(customerId),
+    loadCustomerOrders(customerId),
+  ]);
 }
+
+async function loadContactPersons(customerId) {
+  const list = document.getElementById("cm-people-list");
+  const { data, error } = await sb
+    .from("contact_persons")
+    .select("*")
+    .eq("customer_id", customerId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    list.innerHTML = `<div class="empty">Kon contactpersonen niet laden: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  if (!data || data.length === 0) {
+    list.innerHTML = `<div class="empty">Nog geen contactpersonen toegevoegd.</div>`;
+    return;
+  }
+  list.innerHTML = data
+    .map(
+      (p) => `
+    <div class="person-row" data-person-id="${p.id}">
+      <div>
+        <div class="p-name">${escapeHtml(p.naam)}</div>
+        <div class="p-sub">${[p.functie, p.telefoon, p.email].filter(Boolean).map(escapeHtml).join(" · ") || "—"}</div>
+      </div>
+      <button class="p-remove" data-remove-person="${p.id}">Verwijderen</button>
+    </div>`
+    )
+    .join("");
+
+  list.querySelectorAll("[data-remove-person]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      await sb.from("contact_persons").delete().eq("id", btn.dataset.removePerson);
+      await loadContactPersons(customerId);
+    });
+  });
+}
+
+document.getElementById("cm-person-add-btn").addEventListener("click", async () => {
+  const naam = document.getElementById("cm-person-naam").value.trim();
+  const functie = document.getElementById("cm-person-functie").value.trim();
+  const telefoon = document.getElementById("cm-person-telefoon").value.trim();
+
+  if (!naam) {
+    cmSaveStatus.textContent = "Vul minstens een naam in.";
+    cmSaveStatus.className = "vm-hint err";
+    return;
+  }
+
+  cmSaveStatus.textContent = "Bezig met opslaan…";
+  cmSaveStatus.className = "vm-hint";
+
+  const { error } = await sb.from("contact_persons").insert({
+    customer_id: cmCustomerId,
+    naam,
+    functie: functie || null,
+    telefoon: telefoon || null,
+  });
+
+  if (error) {
+    cmSaveStatus.textContent = "Fout bij opslaan: " + error.message;
+    cmSaveStatus.className = "vm-hint err";
+    return;
+  }
+
+  document.getElementById("cm-person-naam").value = "";
+  document.getElementById("cm-person-functie").value = "";
+  document.getElementById("cm-person-telefoon").value = "";
+  cmSaveStatus.textContent = "Contactpersoon toegevoegd ✓";
+  cmSaveStatus.className = "vm-hint ok";
+  await loadContactPersons(cmCustomerId);
+});
 
 async function loadCustomerContacts(customerId) {
   const { data, error } = await sb
