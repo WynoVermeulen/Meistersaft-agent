@@ -1,0 +1,1050 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duitsland Agent — Meistersaft</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<meta name="theme-color" content="#2c4432">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Duitsland Agent">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#1c2b24;
+    --paper:#f6f4ee;
+    --line:#d8d2c2;
+    --moss:#3f5d45;
+    --moss-dark:#2c4432;
+    --amber:#c47b2c;
+    --danger:#a6402f;
+    --ok:#3f5d45;
+    --muted:#7a7568;
+    --card:#ffffff;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI", system-ui, -apple-system, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  .brandbar{
+    background:var(--moss-dark);
+    color:#fff;
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-weight:600;
+    letter-spacing:.02em;
+  }
+  .brandbar .tag{
+    font-size:12px;
+    font-weight:400;
+    opacity:.75;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  #login-screen{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:calc(100vh - 54px);
+    padding:20px;
+  }
+  .login-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:32px;
+    width:100%;
+    max-width:360px;
+    box-shadow:0 2px 10px rgba(0,0,0,.04);
+  }
+  .login-card h1{
+    font-size:19px;
+    margin:0 0 6px;
+  }
+  .login-card p.sub{
+    color:var(--muted);
+    font-size:13px;
+    margin:0 0 22px;
+  }
+  label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:5px;
+  }
+  input{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    font-size:15px;
+    margin-bottom:16px;
+    background:#fff;
+  }
+  input:focus{outline:2px solid var(--moss); outline-offset:1px;}
+  button{
+    width:100%;
+    padding:11px;
+    border:none;
+    border-radius:7px;
+    background:var(--moss);
+    color:#fff;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  button:hover{background:var(--moss-dark);}
+  button:disabled{opacity:.5; cursor:default;}
+  #login-error{
+    color:var(--danger);
+    font-size:13px;
+    margin:-6px 0 14px;
+    display:none;
+  }
+  #app-screen{display:none;}
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:#fff;
+    border-bottom:1px solid var(--line);
+    padding:10px 20px;
+  }
+  .who{font-size:13px; color:var(--muted);}
+  .who b{color:var(--ink);}
+  .signout{
+    width:auto;
+    padding:7px 14px;
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--line);
+    font-weight:500;
+    font-size:13px;
+  }
+  .signout:hover{background:var(--paper); color:var(--ink);}
+  nav.tabs{
+    display:flex;
+    gap:4px;
+    padding:10px 20px 0;
+    background:#fff;
+    border-bottom:1px solid var(--line);
+  }
+  nav.tabs button.tab{
+    width:auto;
+    background:transparent;
+    color:var(--muted);
+    font-weight:600;
+    font-size:14px;
+    padding:10px 14px;
+    border-radius:0;
+    border-bottom:2px solid transparent;
+  }
+  nav.tabs button.tab.active{
+    color:var(--moss-dark);
+    border-bottom:2px solid var(--moss);
+  }
+  main{padding:20px; max-width:1100px; margin:0 auto;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .toolbar{
+    display:flex;
+    gap:10px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .toolbar input[type=search]{
+    max-width:280px;
+    margin-bottom:0;
+  }
+  select{
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    font-size:14px;
+    background:#fff;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  th, td{
+    text-align:left;
+    padding:9px 12px;
+    font-size:13.5px;
+    border-bottom:1px solid var(--line);
+  }
+  th{
+    background:var(--paper);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    color:var(--muted);
+  }
+  tr:last-child td{border-bottom:none;}
+  .badge{
+    display:inline-block;
+    padding:2px 9px;
+    border-radius:999px;
+    font-size:11.5px;
+    font-weight:600;
+  }
+  .badge.active{background:#e5efe6; color:var(--ok);}
+  .badge.lost{background:#f5e3df; color:var(--danger);}
+  .badge.prospect{background:#f0e8d4; color:var(--amber);}
+  .count{color:var(--muted); font-size:13px; margin-bottom:10px;}
+  .empty{
+    padding:40px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+    gap:12px;
+  }
+  .visit-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+  }
+  .visit-card h3{margin:0 0 4px; font-size:15px;}
+  .visit-card .meta{font-size:12.5px; color:var(--muted); margin-bottom:8px;}
+  .visit-card .status{
+    display:inline-block;
+    font-size:11.5px;
+    font-weight:600;
+    padding:2px 8px;
+    border-radius:999px;
+    background:var(--paper);
+    color:var(--moss-dark);
+  }
+  @media (max-width:640px){
+    main{padding:12px;}
+    nav.tabs{padding:8px 10px 0; overflow-x:auto;}
+    table{font-size:12px;}
+    th, td{padding:7px 8px;}
+  }
+
+  .visit-card{cursor:pointer; transition:box-shadow .12s;}
+  .visit-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08);}
+
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(28,43,36,.45);
+    z-index:50;
+    align-items:flex-start;
+    justify-content:center;
+    padding:24px 12px;
+    overflow-y:auto;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:#fff;
+    border-radius:var(--radius);
+    width:100%;
+    max-width:560px;
+    max-height:calc(100vh - 48px);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .modal-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .modal-head h2{margin:0; font-size:17px;}
+  .modal-close{
+    width:auto;
+    background:transparent;
+    color:var(--muted);
+    font-size:22px;
+    line-height:1;
+    padding:0 4px;
+  }
+  .modal-close:hover{background:transparent; color:var(--ink);}
+  .modal-body{
+    padding:16px 18px;
+    overflow-y:auto;
+  }
+  .modal-body h3{
+    font-size:12.5px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    color:var(--muted);
+    margin:18px 0 8px;
+  }
+  .modal-body h3:first-of-type{margin-top:4px;}
+  .vm-meta{
+    font-size:13.5px;
+    color:var(--muted);
+    padding-bottom:10px;
+    border-bottom:1px solid var(--line);
+  }
+  .mhd-row{
+    display:grid;
+    grid-template-columns:1fr 90px 110px;
+    gap:8px;
+    align-items:center;
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .mhd-row:last-child{border-bottom:none;}
+  .mhd-row .mhd-name{font-weight:600;}
+  .mhd-row .mhd-sub{font-size:12px; color:var(--muted); font-weight:400;}
+  .mhd-row input[type=number]{
+    width:100%;
+    padding:6px 8px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    font-size:13.5px;
+    margin:0;
+  }
+  .mhd-row select{
+    width:100%;
+    padding:6px 6px;
+    font-size:13px;
+  }
+  .doc-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:7px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .doc-row:last-child{border-bottom:none;}
+  .doc-row select{width:120px;}
+  textarea{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    font-size:14px;
+    font-family:inherit;
+    resize:vertical;
+  }
+  .modal-foot{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:14px 18px;
+    border-top:1px solid var(--line);
+  }
+  .modal-foot button{width:auto; padding:9px 16px; font-size:14px;}
+  .modal-foot button.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--line);
+  }
+  .modal-foot button.secondary:hover{background:var(--paper);}
+  .vm-hint{font-size:12.5px; color:var(--muted); flex:1;}
+  .vm-hint.ok{color:var(--ok);}
+  .vm-hint.err{color:var(--danger);}
+  #vm-photo-input{
+    font-size:13px;
+    padding:6px 0;
+  }
+
+  tr.customer-row{cursor:pointer;}
+  tr.customer-row:hover{background:var(--paper);}
+
+  .history-item{
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .history-item:last-child{border-bottom:none;}
+  .history-item .h-date{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+  }
+  .history-item .h-line{margin-top:3px;}
+  .history-item .h-label{color:var(--muted);}
+  .add-form{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px;
+    margin-top:8px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .add-form input, .add-form textarea, .add-form select{
+    margin-bottom:0;
+  }
+  .add-form button{align-self:flex-start;}
+
+  .person-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .person-row:last-child{border-bottom:none;}
+  .person-row .p-name{font-weight:600;}
+  .person-row .p-sub{color:var(--muted); font-size:12.5px;}
+  .person-row .p-remove{
+    width:auto;
+    background:transparent;
+    color:var(--danger);
+    padding:2px 8px;
+    font-size:12px;
+    border:1px solid var(--line);
+    border-radius:6px;
+  }
+  .person-row .p-remove:hover{background:#f5e3df;}
+
+  .fig-year-label{
+    font-size:11px;
+    font-weight:600;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    margin-bottom:4px;
+  }
+  .sales-figures{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px;
+  }
+  .sales-figures .fig{text-align:center;}
+  .sales-figures .fig .fig-val{font-size:16px; font-weight:700; color:var(--moss-dark);}
+  .sales-figures .fig .fig-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em;}
+  .sales-unlink{
+    margin-top:8px;
+    font-size:12px;
+    color:var(--muted);
+    background:transparent;
+    border:none;
+    width:auto;
+    padding:2px 0;
+    text-decoration:underline;
+  }
+  .sales-search-result{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:7px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+  .sales-search-result:last-child{border-bottom:none;}
+  .sales-search-result button{
+    width:auto;
+    padding:4px 10px;
+    font-size:12px;
+  }
+
+  .dash-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:14px;
+    margin-bottom:22px;
+  }
+  .dash-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
+  }
+  .dash-card h3{
+    margin:0 0 10px;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    color:var(--muted);
+  }
+  .dash-big{
+    font-size:26px;
+    font-weight:700;
+    color:var(--moss-dark);
+  }
+  .dash-sub{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .dash-trend-up{color:var(--ok);}
+  .dash-trend-down{color:var(--danger);}
+  .dash-list-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:6px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .dash-list-row:last-child{border-bottom:none;}
+  .dash-list-row .dl-name{font-weight:600;}
+  .dash-list-row .dl-sub{color:var(--muted); font-size:12px;}
+  .dash-section-title{
+    font-size:14px;
+    font-weight:700;
+    margin:0 0 10px;
+    color:var(--moss-dark);
+  }
+
+  .week-overview-block{
+    margin-top:28px;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+  }
+  .week-day-group{
+    margin-bottom:14px;
+  }
+  .week-day-group .wd-date{
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--moss-dark);
+    text-transform:uppercase;
+    letter-spacing:.02em;
+    margin-bottom:6px;
+  }
+  .week-visit-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:6px 10px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:7px;
+    margin-bottom:5px;
+    font-size:13.5px;
+  }
+  .week-visit-row .wv-time{color:var(--muted); font-size:12px;}
+  .week-visit-row.wv-unmatched{background:var(--paper); border-style:dashed;}
+
+  .inbox-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+    margin-bottom:10px;
+  }
+  .inbox-card .ic-type{
+    display:inline-block;
+    padding:2px 9px;
+    border-radius:999px;
+    font-size:11.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    background:var(--paper);
+    color:var(--moss-dark);
+    margin-bottom:6px;
+  }
+  .inbox-card .ic-summary{font-size:14px; margin-bottom:8px;}
+  .inbox-card .ic-detail{
+    font-size:12.5px;
+    color:var(--muted);
+    background:var(--paper);
+    border-radius:6px;
+    padding:8px;
+    margin-bottom:10px;
+    max-height:160px;
+    overflow-y:auto;
+    white-space:pre-wrap;
+    font-family:monospace;
+  }
+  .inbox-card .ic-actions{display:flex; gap:8px;}
+  .inbox-card .ic-actions button{width:auto; padding:8px 14px; font-size:13px;}
+  .inbox-card .ic-actions button.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--line);
+  }
+  .inbox-card.done{opacity:.7;}
+  .inbox-card .ic-status-done{
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ok);
+  }
+
+  .task-panel{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+    margin-bottom:20px;
+  }
+  .task-panel h3:first-of-type{margin-top:0;}
+  .task-panel-foot{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:14px;
+    padding-top:12px;
+    border-top:1px solid var(--line);
+  }
+  .task-panel-foot button{width:auto; padding:9px 16px; font-size:14px;}
+  .task-panel-foot button.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--line);
+  }
+
+  .kb-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));
+    gap:8px;
+  }
+  .kb-day{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:8px 10px;
+    font-size:12.5px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .kb-day.unavailable{
+    background:#f5e3df;
+    border-color:var(--danger);
+  }
+  .kb-day .kb-date{font-weight:600;}
+  .kb-day .kb-label{
+    margin-top:2px;
+    font-size:11px;
+    color:var(--muted);
+  }
+  .kb-day.unavailable .kb-label{color:var(--danger); font-weight:600;}
+
+  .action-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px 14px;
+    margin-bottom:8px;
+    flex-wrap:wrap;
+  }
+  .action-row .ar-info{min-width:200px;}
+  .action-row .ar-name{font-weight:600; font-size:14px;}
+  .action-row .ar-sub{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .action-row .ar-controls{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .action-row select{padding:7px 8px; font-size:13px;}
+  .action-row button{
+    width:auto;
+    padding:7px 14px;
+    font-size:13px;
+  }
+  .action-row .ar-done{
+    color:var(--ok);
+    font-weight:600;
+    font-size:13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="brandbar">
+  <span data-i18n="brand_title">Flevosap · Duitsland Agent</span>
+  <span class="tag">Meistersaft</span>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1 data-i18n="login_title">Inloggen</h1>
+    <p class="sub" data-i18n="login_sub">Toegang voor Wyno, Kasia en Normen.</p>
+    <div id="login-error"></div>
+    <label for="email" data-i18n="label_email">E-mail</label>
+    <input id="email" type="email" autocomplete="username" placeholder="naam@flevosap.nl">
+    <label for="password" data-i18n="label_password">Wachtwoord</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="••••••••">
+    <button id="login-btn" data-i18n="btn_inloggen">Inloggen</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="topbar">
+    <div class="who"><span data-i18n="ingelogd_als">Ingelogd als</span> <b id="who-email">—</b> · <span data-i18n="rol_label">rol:</span> <b id="who-role">—</b></div>
+    <button class="signout" id="signout-btn" data-i18n="btn_uitloggen">Uitloggen</button>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-panel="panel-actions" data-i18n="tab_acties">Acties</button>
+    <button class="tab" id="tab-dashboard" data-panel="panel-dashboard" style="display:none;" data-i18n="tab_dashboard">Dashboard</button>
+    <button class="tab" data-panel="panel-customers" data-i18n="tab_klanten">Klanten</button>
+    <button class="tab" data-panel="panel-visits" data-i18n="tab_bezoeken">Bezoeken</button>
+    <button class="tab" id="tab-kasia-visits" data-panel="panel-kasia-visits" style="display:none;" data-i18n="tab_kasia_bezoeken">Mijn bezoeken</button>
+    <button class="tab" data-panel="panel-calls" data-i18n="tab_telefoontaken">Telefoontaken</button>
+    <button class="tab" data-panel="panel-inbox" data-i18n="tab_inbox">Inbox</button>
+    <button class="tab" id="tab-aanmelding" data-panel="panel-aanmelding" style="display:none;" data-i18n="tab_aanmelding">Nieuwe aanmelding</button>
+  </nav>
+
+  <main>
+    <section id="panel-actions" class="panel active">
+      <div class="week-overview-block" id="actions-today-block" style="display:none;">
+        <h3 class="dash-section-title" style="margin-top:0;" data-i18n="ac_vandaag_titel">Vandaag te bellen</h3>
+        <div id="actions-today-list"></div>
+      </div>
+
+      <div class="toolbar">
+        <select id="actions-soort-filter">
+          <option value="" data-i18n="filter_alle_typen">Alle typen</option>
+          <option value="nooit" data-i18n="filter_nooit_contact">Nog nooit contact</option>
+          <option value="30plus" data-i18n="filter_30plus">Meer dan 30 dagen geleden</option>
+        </select>
+      </div>
+      <div class="count" id="actions-count"></div>
+      <div id="actions-list"><div class="empty" data-i18n="bezig_laden">Bezig met laden…</div></div>
+    </section>
+
+    <section id="panel-dashboard" class="panel">
+      <div id="dash-content"><div class="empty" data-i18n="bezig_laden">Bezig met laden…</div></div>
+    </section>
+
+    <section id="panel-customers" class="panel">
+      <div class="toolbar">
+        <input type="search" id="cust-search" placeholder="Zoek op naam of plaats…" data-i18n-placeholder="zoek_naam_plaats">
+        <select id="cust-status">
+          <option value="" data-i18n="filter_alle_statussen">Alle statussen</option>
+          <option value="active" data-i18n="status_actief">Actief</option>
+          <option value="lost" data-i18n="status_verloren">Verloren</option>
+          <option value="prospect" data-i18n="status_prospect">Prospect</option>
+        </select>
+        <button style="width:auto; padding:8px 14px;" id="new-customer-toggle-btn" data-i18n="nc_nieuwe_klant_btn">+ Nieuwe klant</button>
+      </div>
+
+      <div id="new-customer-form" class="add-form" style="display:none;">
+        <h3 class="dash-section-title" style="margin-top:0;" data-i18n="nc_titel">Nieuwe klant aanmaken</h3>
+        <input type="text" id="nc-search" placeholder="Zoek in EDEKA-leveringsgebied op naam…" data-i18n-placeholder="nc_zoek_placeholder">
+        <div id="nc-search-results"></div>
+        <input type="text" id="nc-kunde" placeholder="Bedrijfsnaam" data-i18n-placeholder="nc_naam_placeholder">
+        <div style="display:flex; gap:8px;">
+          <select id="nc-kanal" style="flex:1;">
+            <option value="EDEKA">EDEKA</option>
+            <option value="REWE">REWE</option>
+            <option value="Trinkgut">Trinkgut</option>
+            <option value="Sonstige">Sonstige</option>
+          </select>
+          <select id="nc-status" style="flex:1;">
+            <option value="active" data-i18n="status_actief">Actief</option>
+            <option value="prospect" data-i18n="status_prospect">Prospect</option>
+          </select>
+        </div>
+        <input type="text" id="nc-adres" placeholder="Adres" data-i18n-placeholder="nc_adres_placeholder">
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="nc-postcode" placeholder="Postcode" style="flex:1;" data-i18n-placeholder="nc_postcode_placeholder">
+          <input type="text" id="nc-plaats" placeholder="Plaats" style="flex:2;" data-i18n-placeholder="nc_plaats_placeholder">
+        </div>
+        <input type="text" id="nc-telefoon" placeholder="Telefoon" data-i18n-placeholder="nc_telefoon_placeholder">
+        <input type="text" id="nc-email" placeholder="E-mail" data-i18n-placeholder="nc_email_placeholder">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button id="nc-aanmaken-btn" data-i18n="nc_aanmaken_btn">Klant aanmaken</button>
+          <div id="nc-status-msg" class="vm-hint"></div>
+        </div>
+      </div>
+
+      <div class="count" id="cust-count"></div>
+      <div id="cust-table-wrap"><div class="empty" data-i18n="bezig_laden">Bezig met laden…</div></div>
+    </section>
+
+    <section id="panel-visits" class="panel">
+      <div class="toolbar">
+        <input type="date" id="visit-date">
+        <button style="width:auto; padding:8px 14px;" id="visit-today-btn" data-i18n="btn_vandaag">Vandaag</button>
+      </div>
+      <div class="count" id="visit-count"></div>
+      <div class="card-grid" id="visit-cards"><div class="empty" data-i18n="bezig_laden">Bezig met laden…</div></div>
+
+      <div class="week-overview-block">
+        <h3 class="dash-section-title" style="margin-top:0;" data-i18n="week_overzicht_titel">Weekoverzicht — daadwerkelijk bezocht (GPS)</h3>
+        <div class="toolbar">
+          <input type="date" id="week-start-date">
+          <button style="width:auto; padding:8px 14px;" id="week-this-btn" data-i18n="btn_deze_week">Deze week</button>
+        </div>
+        <div class="count" id="week-count"></div>
+        <div id="week-results"><div class="empty" data-i18n="kies_week">Kies een week om te bekijken.</div></div>
+      </div>
+
+      <div class="week-overview-block">
+        <h3 class="dash-section-title" style="margin-top:0;" data-i18n="laatste_contact_titel">Alle klanten — laatste contactmoment (meest recent bovenaan)</h3>
+        <div class="count" id="recency-visits-count"></div>
+        <div id="recency-visits-list"><div class="empty" data-i18n="bezig_laden">Bezig met laden…</div></div>
+      </div>
+    </section>
+
+    <section id="panel-kasia-visits" class="panel">
+      <div class="toolbar">
+        <select id="kasia-visit-status-filter">
+          <option value="open" data-i18n="kv_filter_open">Open</option>
+          <option value="afgerond" data-i18n="kv_filter_afgerond">Afgerond</option>
+          <option value="" data-i18n="filter_alle_typen">Alle typen</option>
+        </select>
+      </div>
+      <div class="count" id="kasia-visits-count"></div>
+      <div id="kasia-visits-list"><div class="empty" data-i18n="bezig_laden">Bezig met laden…</div></div>
+
+      <div class="week-overview-block">
+        <h3 class="dash-section-title" style="margin-top:0;" data-i18n="kb_titel">Beschikbaarheid voor demo's (komende 30 dagen)</h3>
+        <div class="vm-hint" data-i18n="kb_hint">Vink de dagen aan waarop je NIET beschikbaar bent voor een demo.</div>
+        <div id="kb-kalender"><div class="empty" data-i18n="bezig_laden">Bezig met laden…</div></div>
+      </div>
+    </section>
+
+    <section id="panel-calls" class="panel">
+      <div class="count" id="call-count"></div>
+      <div id="call-table-wrap"><div class="empty" data-i18n="bezig_laden">Bezig met laden…</div></div>
+
+      <div class="week-overview-block">
+        <h3 class="dash-section-title" style="margin-top:0;" data-i18n="laatste_contact_titel">Alle klanten — laatste contactmoment (meest recent bovenaan)</h3>
+        <div class="count" id="recency-calls-count"></div>
+        <div id="recency-calls-list"><div class="empty" data-i18n="bezig_laden">Bezig met laden…</div></div>
+      </div>
+    </section>
+
+    <section id="panel-inbox" class="panel">
+      <h3 class="dash-section-title" style="margin-top:0;" data-i18n="inbox_titel">Sleep of plak hier: Grovisto-verslagen, e-mails, Prodin-omzetdata, voertuigimports</h3>
+      <div class="add-form">
+        <textarea id="inbox-paste" rows="5" placeholder="Plak hier tekst (bv. een e-mail)…" data-i18n-placeholder="inbox_paste_placeholder"></textarea>
+        <input type="file" id="inbox-file" accept=".txt,.docx,.pdf">
+        <button id="inbox-analyse-btn" data-i18n="inbox_analyseren_btn">Analyseren</button>
+        <div id="inbox-analyse-status" class="vm-hint"></div>
+      </div>
+
+      <h3 class="dash-section-title" data-i18n="inbox_te_bevestigen">Te bevestigen</h3>
+      <div id="inbox-pending-list"><div class="empty" data-i18n="bezig_laden">Bezig met laden…</div></div>
+
+      <h3 class="dash-section-title" data-i18n="inbox_recent">Recent verwerkt</h3>
+      <div id="inbox-done-list"></div>
+    </section>
+
+    <section id="panel-aanmelding" class="panel">
+      <h3 class="dash-section-title" style="margin-top:0;" data-i18n="ga_titel">Nieuwe klant aanmelden</h3>
+      <div class="add-form">
+        <input type="text" id="ga-zoek" placeholder="Zoek in EDEKA-leveringsgebied op naam (optioneel)…" data-i18n-placeholder="nc_zoek_placeholder">
+        <div id="ga-zoek-resultaten"></div>
+
+        <input type="text" id="ga-bedrijfsnaam" placeholder="Bedrijfsnaam" data-i18n-placeholder="nc_naam_placeholder">
+        <select id="ga-kanal">
+          <option value="EDEKA">EDEKA</option>
+          <option value="REWE">REWE</option>
+          <option value="Trinkgut">Trinkgut</option>
+          <option value="Sonstige">Sonstige</option>
+        </select>
+        <input type="text" id="ga-adres" placeholder="Adres" data-i18n-placeholder="nc_adres_placeholder">
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="ga-postcode" placeholder="Postcode" style="flex:1;" data-i18n-placeholder="nc_postcode_placeholder">
+          <input type="text" id="ga-plaats" placeholder="Plaats" style="flex:2;" data-i18n-placeholder="nc_plaats_placeholder">
+        </div>
+        <input type="text" id="ga-telefoon" placeholder="Telefoon" data-i18n-placeholder="nc_telefoon_placeholder">
+        <input type="text" id="ga-email" placeholder="E-mail" data-i18n-placeholder="nc_email_placeholder">
+
+        <h3 data-i18n="ga_contactpersoon">Contactpersoon</h3>
+        <input type="text" id="ga-contact-naam" placeholder="Naam" data-i18n-placeholder="cm_naam_placeholder">
+        <input type="text" id="ga-contact-email" placeholder="E-mail contactpersoon" data-i18n-placeholder="nc_email_placeholder">
+
+        <h3 data-i18n="ga_onboarding">Afspraken</h3>
+        <input type="text" id="ga-betaling" placeholder="Betalingsvoorwaarden" data-i18n-placeholder="ga_betaling_placeholder">
+        <input type="text" id="ga-gln" placeholder="GLN-nummer" data-i18n-placeholder="ga_gln_placeholder">
+        <input type="text" id="ga-schap" placeholder="Toegewezen schapruimte" data-i18n-placeholder="ga_schap_placeholder">
+        <input type="text" id="ga-materialen" placeholder="Meegegeven materialen (bv. display, rol-up banner)" data-i18n-placeholder="ga_materialen_placeholder">
+        <textarea id="ga-actie" rows="2" placeholder="Actie / afspraak (bv. 15% korting eerste bestelling) — komt terug bij Kasia's belafspraak" data-i18n-placeholder="ga_actie_placeholder"></textarea>
+
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button id="ga-versturen-btn" data-i18n="ga_versturen_btn">Aanmelden</button>
+          <div id="ga-status-msg" class="vm-hint"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- KLANTENKAART MODAL -->
+<div id="customer-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="cm-title" data-i18n="cm_titel_default">Klant</h2>
+      <button class="modal-close" id="cm-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="cm-meta" class="vm-meta"></div>
+
+      <!-- Actief bezoek afronden (alleen zichtbaar als de kaart via een bezoektaak geopend is) -->
+      <div id="cm-active-visit-task" class="task-panel" style="display:none;">
+        <h3 class="dash-section-title" data-i18n="vm_titel_default">Bezoek</h3>
+        <div id="vm-meta" class="vm-hint"></div>
+
+        <h3 data-i18n="vm_bestand_mhd">Bestand &amp; MHD per product</h3>
+        <div id="vm-mhd-list"></div>
+
+        <h3 data-i18n="vm_belegen">Belegen</h3>
+        <div id="vm-docs"></div>
+
+        <h3 data-i18n="vm_foto">Foto</h3>
+        <input type="file" id="vm-photo-input" accept="image/*" capture="environment">
+        <div id="vm-photo-status" class="vm-hint"></div>
+
+        <h3 data-i18n="vm_opmerking">Opmerking</h3>
+        <textarea id="vm-notitie" rows="2" placeholder="Eventuele opmerking over dit bezoek…" data-i18n-placeholder="vm_opmerking_placeholder"></textarea>
+
+        <h3 data-i18n="vm_volgend_bezoek">Volgende bezoekdatum <span style="color:var(--danger);">*</span></h3>
+        <input type="date" id="vm-volgend-bezoek-datum">
+        <div class="vm-hint" data-i18n="vm_volgend_bezoek_hint">Verplicht bij afronden, zodat het bezoekritme aangehouden blijft.</div>
+
+        <div class="task-panel-foot">
+          <div id="vm-save-status" class="vm-hint"></div>
+          <button class="secondary" id="vm-save-btn" data-i18n="btn_opslaan">Opslaan</button>
+          <button id="vm-complete-btn" data-i18n="btn_bezoek_afronden">Bezoek afronden</button>
+        </div>
+      </div>
+
+      <!-- Actieve telefoontaak afronden (alleen zichtbaar als de kaart via een belafspraak geopend is) -->
+      <div id="cm-active-call-task" class="task-panel" style="display:none;">
+        <h3 class="dash-section-title" data-i18n="clm_titel_default">Telefoontaak</h3>
+        <div id="clm-meta" class="vm-hint"></div>
+
+        <h3 data-i18n="clm_status">Status</h3>
+        <select id="clm-status">
+          <option value="geplant" data-i18n="clm_status_geplant">Geplant</option>
+          <option value="gebeld" data-i18n="clm_status_gebeld">Gebeld</option>
+          <option value="geen gehoor" data-i18n="clm_status_geen_gehoor">Geen gehoor</option>
+          <option value="belt terug" data-i18n="clm_status_belt_terug">Belt terug</option>
+          <option value="voltooid" data-i18n="clm_status_voltooid">Voltooid</option>
+        </select>
+
+        <h3 data-i18n="clm_resultaat">Resultaat</h3>
+        <textarea id="clm-ergebnis" rows="2" placeholder="Kort resultaat van het gesprek…" data-i18n-placeholder="clm_resultaat_placeholder"></textarea>
+
+        <h3 data-i18n="clm_wanneer_terugbellen">Volgend contactmoment <span style="color:var(--danger);">*</span></h3>
+        <div style="display:flex; gap:8px;">
+          <input type="date" id="clm-callback-datum" style="flex:1;">
+          <input type="time" id="clm-callback-tijd" style="flex:1;">
+        </div>
+        <div class="vm-hint" data-i18n="clm_terugbel_hint">Verplicht bij opslaan — wordt automatisch toegevoegd aan de telefoonplanning.</div>
+
+        <h3 data-i18n="clm_notitie">Notitie</h3>
+        <textarea id="clm-notiz" rows="2" placeholder="Overige opmerkingen…" data-i18n-placeholder="clm_notitie_placeholder"></textarea>
+
+        <div class="add-form" style="margin-top:14px;">
+          <div class="vm-hint" data-i18n="clm_geen_gehoor_hint">Krijg je deze persoon telefonisch niet te pakken? Zet hem op je eigen bezoeklijst.</div>
+          <button class="secondary" id="clm-add-kasia-visit-btn" data-i18n="kv_toevoegen_btn">Toevoegen aan mijn bezoeklijst</button>
+        </div>
+
+        <div class="task-panel-foot">
+          <div id="clm-save-status" class="vm-hint"></div>
+          <button id="clm-save-btn" data-i18n="btn_opslaan">Opslaan</button>
+        </div>
+      </div>
+
+      <h3 data-i18n="cm_omzet">Omzet 2025 (Prodin)</h3>
+      <div id="cm-sales-section"></div>
+
+      <h3 data-i18n="cm_gps">GPS-bezoeken (Normen)</h3>
+      <div id="cm-gps-section"></div>
+
+      <h3 data-i18n="cm_contactpersonen">Contactpersonen</h3>
+      <div id="cm-people-list"></div>
+      <div class="add-form">
+        <input type="text" id="cm-person-naam" placeholder="Naam" data-i18n-placeholder="cm_naam_placeholder">
+        <input type="text" id="cm-person-functie" placeholder="Functie (bv. inkoop, filiaalleider)" data-i18n-placeholder="cm_functie_placeholder">
+        <input type="text" id="cm-person-telefoon" placeholder="Telefoon (optioneel, anders het hoofdnummer)" data-i18n-placeholder="cm_telefoon_placeholder">
+        <button class="secondary" id="cm-person-add-btn" data-i18n="cm_persoon_toevoegen">Contactpersoon toevoegen</button>
+      </div>
+
+      <h3 data-i18n="cm_contactgeschiedenis">Contactgeschiedenis</h3>
+      <div id="cm-contacts-list"></div>
+      <div class="add-form">
+        <select id="cm-contact-soort">
+          <option value="telefoon" data-i18n="soort_telefoon">Telefoon</option>
+          <option value="bezoek" data-i18n="soort_bezoek">Bezoek</option>
+          <option value="e-mail" data-i18n="soort_email">E-mail</option>
+          <option value="overig" data-i18n="soort_overig">Overig</option>
+        </select>
+        <textarea id="cm-contact-besproken" rows="2" placeholder="Wat is besproken?" data-i18n-placeholder="cm_besproken_placeholder"></textarea>
+        <textarea id="cm-contact-te-bespreken" rows="2" placeholder="Wat moet nog besproken worden (volgende keer)?" data-i18n-placeholder="cm_te_bespreken_placeholder"></textarea>
+        <button class="secondary" id="cm-contact-add-btn" data-i18n="cm_contact_toevoegen">Contactmoment toevoegen</button>
+      </div>
+
+      <h3 data-i18n="cm_bestelgeschiedenis">Bestelgeschiedenis</h3>
+      <div id="cm-orders-list"></div>
+      <div class="add-form">
+        <input type="text" id="cm-order-artikel" placeholder="Artikel" data-i18n-placeholder="cm_artikel_placeholder">
+        <input type="text" id="cm-order-hoeveelheid" placeholder="Hoeveelheid (bv. 8 dozen)" data-i18n-placeholder="cm_hoeveelheid_placeholder">
+        <textarea id="cm-order-opmerking" rows="1" placeholder="Opmerking (optioneel)" data-i18n-placeholder="cm_opmerking_placeholder"></textarea>
+        <button class="secondary" id="cm-order-add-btn" data-i18n="cm_bestelling_toevoegen">Bestelling toevoegen</button>
+      </div>
+
+      <h3 data-i18n="cm_acties_titel">Actieperiodes</h3>
+      <div id="cm-actions-list"></div>
+      <div class="add-form">
+        <div style="display:flex; gap:8px;">
+          <input type="date" id="cm-action-start" style="flex:1;">
+          <input type="date" id="cm-action-eind" style="flex:1;">
+        </div>
+        <input type="text" id="cm-action-omschrijving" placeholder="Omschrijving (bv. 20% korting eerste bestelling)" data-i18n-placeholder="cm_actie_omschrijving_placeholder">
+        <button class="secondary" id="cm-action-add-btn" data-i18n="cm_actie_toevoegen">Actie toevoegen</button>
+      </div>
+
+      <h3 data-i18n="cm_demos_titel">Demonstraties</h3>
+      <div id="cm-demos-list"></div>
+      <div class="add-form">
+        <input type="date" id="cm-demo-datum">
+        <div style="display:flex; gap:14px; font-size:13.5px; padding:4px 0;">
+          <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="cm-demo-flevosap"> Flevosap</label>
+          <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="cm-demo-meistersaft"> Meistersaft</label>
+          <label style="display:flex; align-items:center; gap:5px;"><input type="checkbox" id="cm-demo-seizoen"> <span data-i18n="cm_demo_seizoen">Seizoensvarianten</span></label>
+        </div>
+        <textarea id="cm-demo-notitie" rows="1" placeholder="Opmerking (optioneel)" data-i18n-placeholder="cm_opmerking_placeholder"></textarea>
+        <button class="secondary" id="cm-demo-add-btn" data-i18n="cm_demo_toevoegen">Demonstratie inplannen</button>
+        <div class="vm-hint" data-i18n="cm_demo_hint">Er wordt automatisch een opbouwbezoek voor Normen ingepland, 1 dag vooraf.</div>
+      </div>
+
+      <h3 data-i18n="kv_titel">Bezoeklijst Kasia</h3>
+      <div id="cm-kasia-visit-section"></div>
+    </div>
+    <div class="modal-foot">
+      <div id="cm-save-status" class="vm-hint"></div>
+      <button class="secondary" id="cm-close-btn" data-i18n="btn_sluiten">Sluiten</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+
+
+
+</body>
+</html>
